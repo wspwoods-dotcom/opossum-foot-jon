@@ -61,7 +61,7 @@ var STATES = [
   { code: "WY", name: "Wyoming", file: "wyoming-2026-27.json", provisional: false }
 ];
 var REMINDER_LINE = 'Reminder only — always verify with your state agency and local ordinances.';
-var APP_VERSION = 'Jon Cook test copy · build 2026-11-08fq-jon'; /* JON CLONE: private test copy, not the public beta */
+var APP_VERSION = 'Jon Cook test copy · build 2026-11-08fr-jon'; /* JON CLONE: private test copy, not the public beta */
 /* Demo mode (?demo=1): seeds fictional data on a FRESH install only, for
    screenshots and in-person demos. Never touches existing data. */
 var DEMO = /[?&]demo=1\b/.test(location.search);
@@ -4141,18 +4141,24 @@ function saleMoney(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
    text — Jon can type any species, list or not, and what he typed is what
    saves. */
 function saleSpeciesOptions() { return SALE_SPECIES_SEEDS.slice(); }
-/* Condition (green/dried/carcass) rides on each sale row. Condition
-   defaults to Green — the raw state most fur arrives in at the buying
-   table. (Grade was dropped 2026-11-07: Tanner ruled it is not required
-   to be logged.) */
+/* Condition (green/dried/carcass) and grade (the fur trade's standard
+   #1–#4 scale, XL above #1) ride on each sale row. Condition defaults to
+   Green — the raw state most fur arrives in at the buying table. Grade is
+   optional (blank = not graded) so the form stays quick at the table. */
 function saleConditionLabel(c) {
   if (c === 'dried') return 'Dried';
   if (c === 'carcass') return 'Carcass';
   return 'Green';
 }
+function saleGradeLabel(g) {
+  if (!g) return '';
+  return g === 'XL' ? 'XL' : '#' + g;
+}
 function saleItemBits(it) {
   var bits = [];
   if (it.condition) bits.push(saleConditionLabel(it.condition));
+  var g = saleGradeLabel(it.grade);
+  if (g) bits.push(g);
   return bits.join(', ');
 }
 function saleItemLabel(it) {
@@ -4172,10 +4178,11 @@ function renderSaleTotal() {
 function renderSaleItems() {
   var box = $('sale-items');
   if (!box) return;
-  if (!saleItems.length) saleItems.push({ species: '', count: 1, price: '', condition: 'green' });
+  if (!saleItems.length) saleItems.push({ species: '', count: 1, price: '', condition: 'green', grade: '' });
   box.innerHTML = saleItems.map(function (it, i) {
     var line = (it.count * 1 || 0) * (it.price * 1 || 0);
     var cond = it.condition || 'green';
+    var grade = it.grade || '';
     return '<div class="sale-item" data-sale-row="' + i + '">' +
       '<div class="sale-item-head">' +
       '<input type="text" id="sale-sp-' + i + '" data-sale-sp="' + i + '" placeholder="Species" autocomplete="off" value="' + esc(it.species || '') + '">' +
@@ -4196,6 +4203,14 @@ function renderSaleItems() {
       '<option value="dried"' + (cond === 'dried' ? ' selected' : '') + '>Dried</option>' +
       '<option value="carcass"' + (cond === 'carcass' ? ' selected' : '') + '>Carcass</option>' +
       '</select></div>' +
+      '<div><label>Grade</label><select data-sale-grade="' + i + '" aria-label="Grade">' +
+      '<option value=""' + (grade === '' ? ' selected' : '') + '>—</option>' +
+      '<option value="XL"' + (grade === 'XL' ? ' selected' : '') + '>XL</option>' +
+      '<option value="1"' + (grade === '1' ? ' selected' : '') + '>#1</option>' +
+      '<option value="2"' + (grade === '2' ? ' selected' : '') + '>#2</option>' +
+      '<option value="3"' + (grade === '3' ? ' selected' : '') + '>#3</option>' +
+      '<option value="4"' + (grade === '4' ? ' selected' : '') + '>#4</option>' +
+      '</select></div>' +
       '</div>' +
       '<div class="sale-line-total">' + saleMoney(line) + '</div>' +
       '</div>';
@@ -4211,6 +4226,9 @@ function renderSaleItems() {
   });
   box.querySelectorAll('[data-sale-cond]').forEach(function (sel) {
     sel.onchange = function () { saleItems[+sel.getAttribute('data-sale-cond')].condition = sel.value; };
+  });
+  box.querySelectorAll('[data-sale-grade]').forEach(function (sel) {
+    sel.onchange = function () { saleItems[+sel.getAttribute('data-sale-grade')].grade = sel.value; };
   });
   box.querySelectorAll('[data-sale-minus]').forEach(function (b) {
     b.onclick = function () { var i = +b.getAttribute('data-sale-minus'); saleItems[i].count = Math.max(1, (saleItems[i].count * 1 || 1) - 1); renderSaleItems(); renderSaleTotal(); };
@@ -4231,7 +4249,7 @@ function renderSaleItems() {
     b.onclick = function () {
       var i = +b.getAttribute('data-sale-del');
       saleItems.splice(i, 1);
-      if (!saleItems.length) saleItems.push({ species: '', count: 1, price: '', condition: 'green' });
+      if (!saleItems.length) saleItems.push({ species: '', count: 1, price: '', condition: 'green', grade: '' });
       renderSaleItems(); renderSaleTotal();
     };
   });
@@ -4307,7 +4325,7 @@ function saveSale() {
     if (!it.species) { bad = 'Enter a species for every row.'; return; }
     if (count < 1) { bad = 'Every species needs a count of at least 1.'; return; }
     if (!(price > 0)) { bad = 'Enter the price per pelt for every species.'; return; }
-    items.push({ species: it.species, count: count, price: Math.round(price * 100) / 100, condition: it.condition || 'green' });
+    items.push({ species: it.species, count: count, price: Math.round(price * 100) / 100, condition: it.condition || 'green', grade: it.grade || '' });
   });
   if (bad) { saleFormError(bad); return; }
   if (!items.length) { saleFormError('Add at least one species to the sale.'); return; }
@@ -4436,10 +4454,10 @@ function exportSalesCSV() {
     return (a.createdAt || 0) - (b.createdAt || 0);
   });
   if (!sales.length) { toast('No fur sales recorded yet.'); return; }
-  var rows = [['Date', 'Buyer', 'Species', 'Condition', 'Count', 'Price per pelt', 'Line total', 'Sale total', 'Notes', 'Receipt photos']];
+  var rows = [['Date', 'Buyer', 'Species', 'Condition', 'Grade', 'Count', 'Price per pelt', 'Line total', 'Sale total', 'Notes', 'Receipt photos']];
   sales.forEach(function (s) {
     (s.items || []).forEach(function (it) {
-      rows.push([s.date, s.buyer, it.species, it.condition || '', it.count, (it.price * 1).toFixed(2),
+      rows.push([s.date, s.buyer, it.species, it.condition || '', it.grade || '', it.count, (it.price * 1).toFixed(2),
         ((it.count * 1) * (it.price * 1)).toFixed(2), (s.total * 1).toFixed(2), s.notes || '', 'yes']);
     });
   });
@@ -7346,8 +7364,8 @@ function importDataFile(file) {
           var c = it.count * 1 || 0, p = parseFloat(it.price);
           if (c < 1 || !(p > 0)) return;
           items.push({ species: String(it.species), count: c, price: Math.round(p * 100) / 100,
-            condition: (it.condition === 'dried' || it.condition === 'carcass') ? it.condition : (it.condition === 'green' ? 'green' : '') });
-          /* Grade on an old backup is ignored (dropped, no error) — grade is no longer logged. */
+            condition: (it.condition === 'dried' || it.condition === 'carcass') ? it.condition : (it.condition === 'green' ? 'green' : ''),
+            grade: (it.grade === 'XL' || it.grade === '1' || it.grade === '2' || it.grade === '3' || it.grade === '4') ? it.grade : '' });
         });
         if (!items.length) return;
         var total = 0;
@@ -9409,7 +9427,7 @@ function wireUp() {
      record is a sale: date, buyer, species rows, receipt photo. */
   $('btn-record-sale').onclick = openSaleSheet;
   $('btn-sale-add-item').onclick = function () {
-    saleItems.push({ species: '', count: 1, price: '', condition: 'green' });
+    saleItems.push({ species: '', count: 1, price: '', condition: 'green', grade: '' });
     renderSaleItems();
   };
   $('btn-save-sale').onclick = saveSale;
