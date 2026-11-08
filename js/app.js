@@ -61,7 +61,7 @@ var STATES = [
   { code: "WY", name: "Wyoming", file: "wyoming-2026-27.json", provisional: false }
 ];
 var REMINDER_LINE = 'Reminder only — always verify with your state agency and local ordinances.';
-var APP_VERSION = 'Jon Cook test copy · build 2026-11-07fp-jon'; /* JON CLONE: private test copy, not the public beta */
+var APP_VERSION = 'Jon Cook test copy · build 2026-11-08fp-jon'; /* JON CLONE: private test copy, not the public beta */
 /* Demo mode (?demo=1): seeds fictional data on a FRESH install only, for
    screenshots and in-person demos. Never touches existing data. */
 var DEMO = /[?&]demo=1\b/.test(location.search);
@@ -1314,10 +1314,18 @@ var URINE_SEEDS = ['Fox urine', 'Coyote urine', 'Bobcat urine'];
 var VISUAL_SEEDS = ['Feathers', 'Flagging tape', 'Foil strip'];
 var AUDIO_SEEDS = ['Squeaker', 'Electronic caller', 'Mouth call'];
 var OTHER_SEEDS = ['T-bone', 'Artificial eggs'];
+/* JON COOK CLONE — species seed list for the fur-sale form. Curated from
+   the union of furbearers across all 50 states' regulation data (99 raw
+   names): zone/closure variants collapsed to the base species, non-species
+   entries and protected species with no fur trade dropped. Trade names a
+   Nebraska fur buyer uses, plus the clean names the data lacks (Ermine,
+   Wolf, Squirrel, Silver fox, Cross fox). Jon can also type any species by
+   hand — this list only seeds the tap-to-fill suggestions. */
+var SALE_SPECIES_SEEDS = ['Arctic fox', 'Armadillo', 'Badger', 'Beaver', 'Black bear', 'Bobcat', 'Coatimundi', 'Coyote', 'Cross fox', 'Ermine', 'Fisher', 'Fox', 'Gray fox', 'Jackrabbit', 'Kit fox', 'Lynx', 'Marten', 'Mink', 'Mountain lion', 'Muskrat', 'Nutria', 'Opossum', 'Porcupine', 'Raccoon', 'Red fox', 'Ringtail', 'River otter', 'Silver fox', 'Skunk', 'Spotted skunk', 'Squirrel', 'Striped skunk', 'Swift fox', 'Weasel', 'Wolf', 'Wolverine', 'Woodchuck'];
 function savedEntries(key) {
   var se = Store.data.savedEntries;
   if (!se || typeof se !== 'object') se = Store.data.savedEntries = {};
-  if (!Array.isArray(se[key])) se[key] = (key === 'urine') ? URINE_SEEDS.slice() : (key === 'visual') ? VISUAL_SEEDS.slice() : (key === 'audio') ? AUDIO_SEEDS.slice() : (key === 'other' ? OTHER_SEEDS.slice() : []);
+  if (!Array.isArray(se[key])) se[key] = (key === 'urine') ? URINE_SEEDS.slice() : (key === 'visual') ? VISUAL_SEEDS.slice() : (key === 'audio') ? AUDIO_SEEDS.slice() : (key === 'other') ? OTHER_SEEDS.slice() : (key === 'salespecies') ? SALE_SPECIES_SEEDS.slice() : [];
   return se[key];
 }
 function rememberOne(key, v) {
@@ -1328,7 +1336,11 @@ function rememberOne(key, v) {
   }
   if (li !== -1) arr.splice(li, 1);
   arr.unshift(v);
-  if (arr.length > 30) arr.length = 30;
+  /* A field with a large seed list (the sale species list) must not lose
+     its seeds to the cap — the cap is the seed count plus 30 remembered
+     entries, so typed species are remembered without eroding the seeds. */
+  var cap = entrySeeds(key).length + 30;
+  if (arr.length > cap) arr.length = cap;
 }
 /* Q79 (2026-10-01): Tanner — remove one user-typed entry from a field's
    suggestion list. Seeds stay; only what he typed can be deleted. */
@@ -1346,6 +1358,7 @@ function entrySeeds(key) {
   if (key === 'visual') return VISUAL_SEEDS;
   if (key === 'audio') return AUDIO_SEEDS;
   if (key === 'other') return OTHER_SEEDS;
+  if (key === 'salespecies') return SALE_SPECIES_SEEDS;
   return [];
 }
 function isSeedEntry(key, v) {
@@ -4121,16 +4134,37 @@ function openPostCatchPrompt(setId) {
    the receipt photos). No routes in this copy. */
 var pendingSalePhotos = [];
 var saleItems = []; /* [{species, count, price}] — one row per species */
-var SALE_SPECIES_FALLBACK = ['Raccoon', 'Coyote', 'Beaver', 'Muskrat', 'Mink', 'Red fox', 'Gray fox', 'Bobcat', 'Opossum', 'Striped skunk', 'Badger', 'River otter'];
 function saleMoney(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
-function saleSpeciesOptions() {
-  var names = [];
-  try {
-    stateSpecies().forEach(function (sp) { if (sp && sp.common_name && !sp.domestic) names.push(sp.common_name); });
-  } catch (e) { /* no season data loaded: fall back to common furbearers */ }
-  if (!names.length) names = SALE_SPECIES_FALLBACK.slice();
-  names.sort();
-  return names;
+/* Species suggestions for the sale form come from SALE_SPECIES_SEEDS (the
+   curated 50-state union, wired into savedEntries under key 'salespecies'
+   so attachSuggest offers them as tap-to-fill). The input itself is free
+   text — Jon can type any species, list or not, and what he typed is what
+   saves. */
+function saleSpeciesOptions() { return SALE_SPECIES_SEEDS.slice(); }
+/* Condition (green/dried/carcass) and grade (the fur trade's standard
+   #1–#4 scale, XL above #1) ride on each sale row. Condition defaults to
+   Green — the raw state most fur arrives in at the buying table. Grade is
+   optional (blank = not graded) so the form stays quick at the table. */
+function saleConditionLabel(c) {
+  if (c === 'dried') return 'Dried';
+  if (c === 'carcass') return 'Carcass';
+  return 'Green';
+}
+function saleGradeLabel(g) {
+  if (!g) return '';
+  return g === 'XL' ? 'XL' : '#' + g;
+}
+function saleItemBits(it) {
+  var bits = [];
+  if (it.condition) bits.push(saleConditionLabel(it.condition));
+  var g = saleGradeLabel(it.grade);
+  if (g) bits.push(g);
+  return bits.join(', ');
+}
+function saleItemLabel(it) {
+  var bits = saleItemBits(it);
+  var suffix = bits ? ' (' + bits + ')' : '';
+  return (it.count * 1) + ' ' + it.species + suffix + ' × ' + saleMoney(it.price * 1);
 }
 function saleItemsTotal() {
   var t = 0;
@@ -4144,17 +4178,17 @@ function renderSaleTotal() {
 function renderSaleItems() {
   var box = $('sale-items');
   if (!box) return;
-  var opts = saleSpeciesOptions();
-  if (!saleItems.length) saleItems.push({ species: opts[0] || '', count: 1, price: '' });
+  if (!saleItems.length) saleItems.push({ species: '', count: 1, price: '', condition: 'green', grade: '' });
   box.innerHTML = saleItems.map(function (it, i) {
     var line = (it.count * 1 || 0) * (it.price * 1 || 0);
+    var cond = it.condition || 'green';
+    var grade = it.grade || '';
     return '<div class="sale-item" data-sale-row="' + i + '">' +
       '<div class="sale-item-head">' +
-      '<select data-sale-sp="' + i + '" aria-label="Species">' +
-      opts.map(function (o) { return '<option value="' + esc(o) + '"' + (o === it.species ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') +
-      '</select>' +
+      '<input type="text" id="sale-sp-' + i + '" data-sale-sp="' + i + '" placeholder="Species" autocomplete="off" value="' + esc(it.species || '') + '">' +
       '<button type="button" class="btn-small btn-secondary" data-sale-del="' + i + '" aria-label="Remove species">×</button>' +
       '</div>' +
+      '<div class="suggest" id="sale-sp-' + i + '-suggest"></div>' +
       '<div class="sale-grid">' +
       '<div><label>Count</label><div class="stepper">' +
       '<button type="button" data-sale-minus="' + i + '" aria-label="Fewer">−</button>' +
@@ -4163,11 +4197,38 @@ function renderSaleItems() {
       '</div></div>' +
       '<div><label>Price per pelt</label><input type="number" data-sale-price="' + i + '" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="' + (it.price === '' ? '' : it.price) + '"></div>' +
       '</div>' +
+      '<div class="sale-grid">' +
+      '<div><label>Condition</label><select data-sale-cond="' + i + '" aria-label="Condition">' +
+      '<option value="green"' + (cond === 'green' ? ' selected' : '') + '>Green</option>' +
+      '<option value="dried"' + (cond === 'dried' ? ' selected' : '') + '>Dried</option>' +
+      '<option value="carcass"' + (cond === 'carcass' ? ' selected' : '') + '>Carcass</option>' +
+      '</select></div>' +
+      '<div><label>Grade</label><select data-sale-grade="' + i + '" aria-label="Grade">' +
+      '<option value=""' + (grade === '' ? ' selected' : '') + '>—</option>' +
+      '<option value="XL"' + (grade === 'XL' ? ' selected' : '') + '>XL</option>' +
+      '<option value="1"' + (grade === '1' ? ' selected' : '') + '>#1</option>' +
+      '<option value="2"' + (grade === '2' ? ' selected' : '') + '>#2</option>' +
+      '<option value="3"' + (grade === '3' ? ' selected' : '') + '>#3</option>' +
+      '<option value="4"' + (grade === '4' ? ' selected' : '') + '>#4</option>' +
+      '</select></div>' +
+      '</div>' +
       '<div class="sale-line-total">' + saleMoney(line) + '</div>' +
       '</div>';
   }).join('');
-  box.querySelectorAll('[data-sale-sp]').forEach(function (sel) {
-    sel.onchange = function () { saleItems[+sel.getAttribute('data-sale-sp')].species = sel.value; };
+  /* Species: free-text input with tap-to-fill suggestions from the expanded
+     list (attachSuggest, key 'salespecies') — Jon can type any species.
+     The input handler keeps the row's species in step as he types, without
+     re-rendering (re-rendering would destroy the input mid-keystroke). */
+  box.querySelectorAll('[data-sale-sp]').forEach(function (inp) {
+    var i = +inp.getAttribute('data-sale-sp');
+    attachSuggest('sale-sp-' + i, 'sale-sp-' + i + '-suggest', 'salespecies');
+    inp.addEventListener('input', function () { saleItems[i].species = inp.value.trim(); });
+  });
+  box.querySelectorAll('[data-sale-cond]').forEach(function (sel) {
+    sel.onchange = function () { saleItems[+sel.getAttribute('data-sale-cond')].condition = sel.value; };
+  });
+  box.querySelectorAll('[data-sale-grade]').forEach(function (sel) {
+    sel.onchange = function () { saleItems[+sel.getAttribute('data-sale-grade')].grade = sel.value; };
   });
   box.querySelectorAll('[data-sale-minus]').forEach(function (b) {
     b.onclick = function () { var i = +b.getAttribute('data-sale-minus'); saleItems[i].count = Math.max(1, (saleItems[i].count * 1 || 1) - 1); renderSaleItems(); renderSaleTotal(); };
@@ -4188,7 +4249,7 @@ function renderSaleItems() {
     b.onclick = function () {
       var i = +b.getAttribute('data-sale-del');
       saleItems.splice(i, 1);
-      if (!saleItems.length) saleItems.push({ species: opts[0] || '', count: 1, price: '' });
+      if (!saleItems.length) saleItems.push({ species: '', count: 1, price: '', condition: 'green', grade: '' });
       renderSaleItems(); renderSaleTotal();
     };
   });
@@ -4261,10 +4322,10 @@ function saveSale() {
   saleItems.forEach(function (it) {
     var count = it.count * 1 || 0;
     var price = parseFloat(it.price);
-    if (!it.species) { bad = 'Pick a species for every row.'; return; }
+    if (!it.species) { bad = 'Enter a species for every row.'; return; }
     if (count < 1) { bad = 'Every species needs a count of at least 1.'; return; }
     if (!(price > 0)) { bad = 'Enter the price per pelt for every species.'; return; }
-    items.push({ species: it.species, count: count, price: Math.round(price * 100) / 100 });
+    items.push({ species: it.species, count: count, price: Math.round(price * 100) / 100, condition: it.condition || 'green', grade: it.grade || '' });
   });
   if (bad) { saleFormError(bad); return; }
   if (!items.length) { saleFormError('Add at least one species to the sale.'); return; }
@@ -4283,6 +4344,10 @@ function saveSale() {
   if (!Array.isArray(Store.data.sales)) Store.data.sales = [];
   Store.data.sales.push(sale);
   rememberEntry('buyer', buyer);
+  /* Remember species Jon typed, so an uncommon one he types by hand shows
+     up as a suggestion next time. (rememberOne never truncates below the
+     seed count, so the 37-name seed list stays intact.) */
+  items.forEach(function (it) { rememberOne('salespecies', it.species); });
   Store.save();
   pendingSalePhotos.forEach(function (ph) {
     IDB.put('photos', {
@@ -4301,9 +4366,7 @@ function saleById(id) {
   return found;
 }
 function saleLinesText(sale) {
-  return (sale.items || []).map(function (it) {
-    return (it.count * 1) + ' ' + it.species + ' × ' + saleMoney(it.price * 1);
-  }).join(' · ');
+  return (sale.items || []).map(function (it) { return saleItemLabel(it); }).join(' · ');
 }
 function renderSalesHistory() {
   var box = $('sales-list');
@@ -4332,7 +4395,9 @@ function openSaleDetail(saleId) {
   var s = saleById(saleId);
   if (!s) return;
   var itemsHtml = (s.items || []).map(function (it) {
-    return '<dt>' + esc(it.species) + '</dt><dd>' + (it.count * 1) + ' × ' + saleMoney(it.price * 1) + ' = ' + saleMoney((it.count * 1) * (it.price * 1)) + '</dd>';
+    var bits = saleItemBits(it);
+    var sub = bits ? ' · ' + bits : '';
+    return '<dt>' + esc(it.species) + sub + '</dt><dd>' + (it.count * 1) + ' × ' + saleMoney(it.price * 1) + ' = ' + saleMoney((it.count * 1) * (it.price * 1)) + '</dd>';
   }).join('');
   showModal(
     '<h3>Fur sale — ' + esc(fmtDate(s.date)) + '</h3>' +
@@ -4389,10 +4454,10 @@ function exportSalesCSV() {
     return (a.createdAt || 0) - (b.createdAt || 0);
   });
   if (!sales.length) { toast('No fur sales recorded yet.'); return; }
-  var rows = [['Date', 'Buyer', 'Species', 'Count', 'Price per pelt', 'Line total', 'Sale total', 'Notes', 'Receipt photos']];
+  var rows = [['Date', 'Buyer', 'Species', 'Condition', 'Grade', 'Count', 'Price per pelt', 'Line total', 'Sale total', 'Notes', 'Receipt photos']];
   sales.forEach(function (s) {
     (s.items || []).forEach(function (it) {
-      rows.push([s.date, s.buyer, it.species, it.count, (it.price * 1).toFixed(2),
+      rows.push([s.date, s.buyer, it.species, it.condition || '', it.grade || '', it.count, (it.price * 1).toFixed(2),
         ((it.count * 1) * (it.price * 1)).toFixed(2), (s.total * 1).toFixed(2), s.notes || '', 'yes']);
     });
   });
@@ -7298,7 +7363,9 @@ function importDataFile(file) {
           if (!it || !it.species) return;
           var c = it.count * 1 || 0, p = parseFloat(it.price);
           if (c < 1 || !(p > 0)) return;
-          items.push({ species: String(it.species), count: c, price: Math.round(p * 100) / 100 });
+          items.push({ species: String(it.species), count: c, price: Math.round(p * 100) / 100,
+            condition: (it.condition === 'dried' || it.condition === 'carcass') ? it.condition : (it.condition === 'green' ? 'green' : ''),
+            grade: (it.grade === 'XL' || it.grade === '1' || it.grade === '2' || it.grade === '3' || it.grade === '4') ? it.grade : '' });
         });
         if (!items.length) return;
         var total = 0;
@@ -9360,8 +9427,7 @@ function wireUp() {
      record is a sale: date, buyer, species rows, receipt photo. */
   $('btn-record-sale').onclick = openSaleSheet;
   $('btn-sale-add-item').onclick = function () {
-    var opts = saleSpeciesOptions();
-    saleItems.push({ species: opts[0] || '', count: 1, price: '' });
+    saleItems.push({ species: '', count: 1, price: '', condition: 'green', grade: '' });
     renderSaleItems();
   };
   $('btn-save-sale').onclick = saveSale;
