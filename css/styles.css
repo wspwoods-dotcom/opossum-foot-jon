@@ -1,0 +1,1216 @@
+/* Opossum Foot — beta PWA styles
+   Mobile-first, iOS Safari friendly. Big touch targets for cold hands.
+   Rugged field palette: dark moss, brass, cream. */
+
+:root {
+  --bg: #141810;
+  --bg2: #1d2418;
+  --panel: #2B341B;
+  --sheet: #2e281b;
+  --ink: #f2ead8;
+  --muted: #b3a98f;
+  --faint: #7d7663;
+  --accent: #E7C945;      /* Q217: brand yellow (was brass #d19a2f) */
+  --accent-ink: #1a1408;
+  --green: #7fa650;
+  --blue: #5b8dd9;
+  --red: #d05245;
+  --amber: #E7C945;
+  --gray: #8a8a8a;
+  --pin-active: #7fa650;   /* Q145 default scheme = Earthy */
+  --pin-sprung: #d19a2f;
+  --pin-pulled: #7d7663;
+  --pin-missing: #5b8dd9;
+  --pin-prospect: #7a5fa0;   /* Q189 */
+  --line: #7C7052;      /* Q221 (2026-10-27): warm sepia line — was #3a4330, too close to panel/bg, read "sleepy" (Tanner). One variable draws every outline in the app. */
+  --radius: 12px;
+  --tap: 52px;            /* minimum touch target */
+  --tabbar-h: 64px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  overscroll-behavior-y: none;
+  /* Q13: the page itself never pinch-zooms — single-finger pan/scroll stays
+     native, pinch-zoom and double-tap-zoom are off. Leaflet keeps its own
+     touch-action on #map and its JS pinch-zoom is unaffected. */
+  touch-action: pan-x pan-y;
+}
+/* Pin the document itself in place (standard PWA boilerplate): only the
+   inner .scroll panes and sheet bodies ever move. Stops iOS from dragging
+   the whole page — tab bar included — up over dead space. */
+body {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh; /* B27: pin the app to the true viewport — no dead band below the tab bar */
+}
+/* Don't let an inner scroller chain its overscroll out to the document. */
+.scroll, .sheet-body, .modal-card { overscroll-behavior-y: contain; }
+
+/* ---------- views ---------- */
+.view { display: none; height: 100%; height: 100dvh; }
+.view.active { display: flex; flex-direction: column; }
+
+/* ---------- splash ---------- */
+#view-splash { align-items: center; justify-content: center; text-align: center; padding: 32px; background: radial-gradient(ellipse at 50% 35%, #2B341B 0%, var(--bg) 70%); }
+#view-splash img { width: min(82vw, 350px); height: auto; filter: drop-shadow(0 10px 28px rgba(0,0,0,.45)); }
+#view-splash h1 { font-size: 40px; margin: 20px 0 6px; letter-spacing: .5px; }
+#view-splash p { color: var(--muted); margin: 4px 0; }
+#view-splash .loading { margin-top: 26px; color: var(--faint); font-size: 15px; }
+
+/* ---------- onboarding ---------- */
+#view-onboard { align-items: center; justify-content: center; padding: 28px 22px; }
+.onboard-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 26px 22px; }
+.onboard-card h2 { margin: 0 0 6px; font-size: 24px; }
+.onboard-card p { color: var(--muted); font-size: 15px; margin: 0 0 18px; }
+.onboard-card img { width: 84px; height: 84px; border-radius: 18px; display: block; margin-bottom: 14px; object-fit: contain; padding: 8px; box-sizing: border-box; background: radial-gradient(ellipse at 50% 40%, #2B341B 0%, #141810 78%); }
+
+/* ---------- buttons / inputs ---------- */
+button, .btn {
+  font-family: inherit; font-size: 17px; font-weight: 600;
+  min-height: var(--tap);
+  border: none; border-radius: var(--radius);
+  padding: 12px 18px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  text-decoration: none;
+}
+/* Q175 (2026-10-08): the button rule's display:inline-flex overrides the UA
+   [hidden] rule, so hidden buttons (like the check-in on pulled sets) stayed
+   visible. Enforce hidden globally. */
+[hidden] { display: none !important; }
+/* Q178 (2026-10-08): view-only notes on the detail sheet — plain text, not a box. */
+.notes-view { font-size: 17px; color: var(--ink); white-space: pre-wrap; word-wrap: break-word; margin: 0 0 8px; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); width: 100%; }
+.btn-secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--line); width: 100%; }
+.btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+/* Prominent official-regulations link at the top of the Seasons tab. */
+.regs-link {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 12px 0; padding: 12px 18px; min-height: var(--tap);
+  border-radius: var(--radius); background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; font-size: 17px; text-decoration: none; text-align: center;
+}
+/* Tanner 2026-10-07: the 84px uniform thickness is gone — these are way too
+   big next to the other buttons in the tabs. Standard button proportions now
+   (52px min-height), same as everywhere else. */
+/* Q134 (2026-10-01): Tanner — gold-button lettering is ALL CAPS by rule, not
+   by memory. text-transform on the class means any label dropped into a gold
+   button renders capped automatically; title case can't sneak through again. */
+.regs-link { text-transform: uppercase; }
+.regs-link .dim { color: var(--accent-ink); opacity: 0.75; font-weight: 600; }
+.btn-danger { background: #3a1f1b; color: #f0a49c; border: 1px solid #6e2f28; }
+.btn-small { min-height: 44px; font-size: 15px; padding: 8px 14px; width: auto; }
+button:disabled { opacity: .45; }
+
+label.field { display: block; margin: 14px 0 4px; font-size: 14px; font-weight: 600; color: var(--muted); text-align: center; }
+/* Tanner 2026-10-01: the weekday sits on its own small line below the date
+   field — never in the label. */
+.dow-line { text-align: center; color: var(--muted); font-size: 13px; margin-top: 3px; min-height: 15px; }
+/* Q55: the "What is it?" reveal under an Other-capable dropdown. */
+.other-wrap { margin-top: 2px; }
+.other-wrap label.field { margin-top: 8px; font-size: 13px; }
+input[type=text], input[type=date], input[type=time], input[type=number], input[type=search], input[type=url], input[type=tel], select, textarea {
+  width: 100%; min-height: var(--tap);
+  background: #10140c; color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  font-family: inherit; font-size: 17px;
+  padding: 12px 14px;
+}
+/* Q109 (2026-10-01): Tanner — the catch-time picker rendered as the raw iOS
+   white pill because input[type=time] was missing from the field rule above.
+   It now wears the same dark field as every other input, sitting under the
+   date. color-scheme keeps the opened spinner dark too. */
+input[type=time] { color-scheme: dark; }
+/* Q224 (2026-10-27): Tanner's screenshot — the Reports From/To date fields
+   rendered as empty black boxes on his iPhone. Q109 gave the time picker
+   color-scheme: dark but the date fields never got it, so iOS drew their
+   native edit text in the light scheme and it vanished on the dark field.
+   Every date input in the app (Reports range, set/catch/trip dates) gets
+   the same dark scheme now. */
+input[type=date] { color-scheme: dark; }
+textarea { min-height: 84px; resize: vertical; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* "e.g." hint state for the manufacturer/type selects — nothing picked yet. */
+select.select-hint { color: var(--faint); }
+
+/* ---------- main layout ---------- */
+#view-main { position: relative; }
+.pane { display: none; flex: 1; flex-direction: column; min-height: 0; position: relative; }
+.pane.active { display: flex; }
+
+#tabbar {
+  min-height: var(--tabbar-h);
+  flex: 0 0 auto;
+  display: flex;
+  background: #10140c;
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+#tabbar button {
+  flex: 1 1 0; min-width: 0; background: none; border: none; border-radius: 0;
+  color: var(--ink); font-size: 9px; font-weight: 600; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; min-height: 0; padding: 8px 2px;
+}
+#tabbar button .ti { font-size: 24px; line-height: 1; }
+/* B14: every tab identical — white icons, cream labels. The active tab keeps
+   the same colors and is marked only by a thin brass tick, so the bar reads
+   as one consistent row. */
+#tabbar button.active { color: var(--ink); box-shadow: inset 0 3px 0 var(--accent); }
+
+/* ---------- county banner (LOUD) ---------- */
+#county-banner {
+  flex: 0 0 auto;
+  background: #0e120a;
+  border-bottom: 2px solid var(--accent);
+  padding: calc(10px + env(safe-area-inset-top)) 12px 9px;
+  text-align: center;
+  z-index: 500;
+}
+#county-banner .cb-county { font-size: 22px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+#county-banner .cb-state { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+#county-banner.unknown .cb-county { color: var(--faint); font-size: 16px; letter-spacing: .5px; }
+
+/* ---------- active trap line bar (persistent) ---------- */
+#line-bar {
+  flex: 0 0 auto; z-index: 500;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  background: #10150c;
+  border: 0; border-bottom: 1px solid var(--line);
+  padding: 8px 12px;
+  color: var(--ink);
+  font-size: 14px; font-weight: 700; letter-spacing: .3px;
+  cursor: pointer;
+  font-family: inherit;
+}
+#line-bar .lb-tag {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px;
+}
+#line-bar-name { color: var(--accent); max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#line-bar .lb-go { color: var(--faint); font-size: 18px; line-height: 1; }
+
+#state-alert, #offline-banner, #pin-hint {
+  flex: 0 0 auto; z-index: 500;
+  padding: 10px 14px; font-size: 15px; font-weight: 600; text-align: center;
+}
+#state-alert { background: #3d2c10; color: #f5cf7a; border-bottom: 1px solid #6b4d1c; display: none; }
+#state-alert.show { display: block; }
+#state-alert button { margin-left: 10px; }
+#offline-banner { background: #2a2a2a; color: #ddd; border-bottom: 1px solid #444; display: none; }
+#offline-banner.show { display: block; }
+#pin-hint { background: var(--accent); color: var(--accent-ink); display: none; }
+#pin-hint.show { display: block; }
+#place-bar { flex: 0 0 auto; z-index: 500; display: none; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; font-size: 15px; font-weight: 600; background: #1d2a12; color: #fff; border-bottom: 1px solid var(--line); }
+#place-bar.show { display: flex; }
+.pin-place { background: #ff9f1c; animation: pinpulse 1.4s infinite; }
+/* Q53: home-ground picker */
+#home-bar { flex: 0 0 auto; z-index: 500; display: none; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px; font-size: 15px; font-weight: 600; background: #1d2a12; color: #fff; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+#home-bar.show { display: flex; }
+/* B26: two clear choices side by side — cancel rides inline, no dedicated row. */
+/* Q132 (2026-10-01): Tanner — "Set home here" centers on the screen; the
+   cancel × pins to the right edge of the button row. */
+#home-bar .home-bar-actions { display: flex; align-items: center; justify-content: center; width: 100%; position: relative; }
+#home-bar .home-bar-actions .btn-ghost { position: absolute; right: 0; margin-left: 0; }
+.mflow { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.mflow-btn { width: 100%; min-height: 56px; font-size: 17px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 10px; }
+.mflow-n { display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,.28);
+  font-size: 15px; font-weight: 700; flex: 0 0 auto; color: #f2ead8; }
+/* Tanner 2026-10-07: the trip form walks a numbered flow like the mileage
+   screen — step headers reuse the .mflow-n badge. */
+.tflow-step { display: flex; align-items: center; gap: 10px; font-weight: 700;
+  font-size: 16px; margin: 14px 0 6px; }
+.tflow-step .dim { font-weight: 400; font-size: 13px; }
+/* Tanner 2026-10-07: the three steps each get their own app-palette color. */
+.mflow-btn-1 { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
+.mflow-btn-2 { background: var(--green); color: #131c0b; border: 1px solid var(--green); }
+.mflow-btn-3 { background: var(--blue); color: #0e1626; border: 1px solid var(--blue); }
+.mflow-close { margin-top: 2px; }
+.flow-steps { font-size: 13px; line-height: 1.55; margin-top: 0; }
+#home-bar .zip-jump { width: 76px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: #0f150a; color: #fff; font-size: 15px; text-align: center; }
+/* Q118b (2026-10-01): Tanner — the home pin was rendering at 30px because the
+   later `.pin` rule (same specificity) beat `.pin-home`'s 52px. Doubling the
+   class wins the cascade so the Q118 bigger-home-pin fix actually shows. */
+.pin.pin-home { background: var(--green); font-size: 28px; line-height: 46px; text-align: center; width: 52px; height: 52px; }
+@keyframes pinpulse { 0% { box-shadow: 0 0 0 0 rgba(255,159,28,.65); } 70% { box-shadow: 0 0 0 16px rgba(255,159,28,0); } 100% { box-shadow: 0 0 0 0 rgba(255,159,28,0); } }
+
+/* ---------- map ---------- */
+#pane-map { background: #0c0f08; }
+#map { flex: 1; min-height: 0; z-index: 1; }
+.leaflet-container { font-family: inherit; background: #0c0f08; }
+
+.map-fabs { position: absolute; right: 12px; bottom: 14px; z-index: 500; display: flex; flex-direction: column; gap: 10px; }
+.fab {
+  width: 58px; height: 58px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink);
+  font-size: 26px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border: none; box-shadow: 0 4px 14px rgba(0,0,0,.5);
+  padding: 0; min-height: 0;
+}
+.fab.secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-size: 22px; }
+.fab.active-mode { background: var(--green); color: #0e150a; }
+.fab.paused-mode { background: var(--green); color: #0e150a; opacity: .45; }
+/* Q95 (2026-10-01): Tanner — the + button rests dark like the other two fabs;
+   the old always-green #btn-add-gps override was removed. */
+.leaflet-bar a { background: var(--green); color: #0e150a; border-bottom: 1px solid rgba(0,0,0,.25); }
+.leaflet-bar a:hover, .leaflet-bar a:focus { background: var(--green); color: #0e150a; }
+.leaflet-control-layers-toggle { background-color: var(--green); }
+
+/* set pins */
+.pin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.6); position: relative; }
+/* Q145: pin colors are scheme-driven (Settings → Appearance). Earthy is default. */
+.pin-active { background: var(--pin-active); }
+.pin-sprung { background: var(--pin-sprung); }
+.pin-pulled { background: var(--pin-pulled); }
+.pin-missing { background: var(--pin-missing); }
+.pin-prospect { background: var(--pin-prospect); }
+/* Q145 scheme overrides — Earthy lives in :root above. */
+body[data-pinscheme="classic"] { --pin-active:#4caf50; --pin-sprung:#d19a2f; --pin-pulled:#8a8a8a; --pin-missing:#3b82f6; --pin-prospect:#7e57c2; }
+body[data-pinscheme="bold"] { --pin-active:#2ecc40; --pin-sprung:#f5a623; --pin-pulled:#a8a8a8; --pin-missing:#2f7bff; --pin-prospect:#9b59b6; }
+body[data-pinscheme="pastel"] { --pin-active:#a9d6a5; --pin-sprung:#eacd7d; --pin-pulled:#c9c9c9; --pin-missing:#a9c6f2; --pin-prospect:#c3a6dd; }
+/* Q68: trap-check clock — a set past its check interval without any activity
+   turns its pin red, whatever its status color was. */
+.pin-overdue { background: #e5484d; }
+/* Q68: overdue check line on the set detail sheet. */
+.check-overdue { color: #ff7a7a; font-weight: 600; }
+/* Q17: wind arrow — small triangle orbiting the pin, pointing downwind
+   (where scent goes). The wrapper rotates; the glyph always tips outward. */
+.wind-arrow { position: absolute; left: 0; top: 0; width: 30px; height: 30px; pointer-events: none; }
+.wind-arrow i { position: absolute; left: 50%; top: -12px; transform: translateX(-50%); font-style: normal; font-size: 16px; line-height: 1; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.85); }
+.wind-arrow.stale i { opacity: .4; }
+.gps-dot { width: 18px; height: 18px; border-radius: 50%; background: #2f8ff0; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(47,143,240,.25); }
+
+/* map status filters: independent multi-select toggles overlaid on the map.
+   B19: full-width, centered — the weather chip no longer crowds the top-right. */
+.map-status-filters {
+  position: absolute; top: 8px; left: 8px; right: 8px; z-index: 500;
+  justify-content: safe center; padding: 2px 0;
+}
+.map-status-filters .chip { background: rgba(18,22,14,.88); }
+/* Q133 (2026-10-01): Tanner — the status chips read in all caps like the
+   rest of the map header. */
+.map-status-filters .chip { text-transform: uppercase; }
+/* Q138/Q146 (2026-10-02): Tanner — the four trap-status buttons wear the same
+   3px white border as the map pins, so buttons and pins read as one language. */
+.map-status-filters .chip.mst-active,
+.map-status-filters .chip.mst-sprung,
+.map-status-filters .chip.mst-pulled,
+.map-status-filters .chip.mst-missing { border: 3px solid #fff; }
+.map-status-filters .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* Map status filter chips carry their pin colors so the buttons read the
+   same as the pins on the map. Off state keeps the color as an outline. */
+/* Q145: chips follow the active pin scheme. */
+.chip.mst-active.on { background: var(--pin-active); border-color: var(--pin-active); color: #0e150a; }
+.chip.mst-sprung.on { background: var(--pin-sprung); border-color: var(--pin-sprung); color: #0e150a; }
+.chip.mst-pulled.on { background: var(--pin-pulled); border-color: var(--pin-pulled); color: #0e150a; }
+.chip.mst-missing.on { background: var(--pin-missing); border-color: var(--pin-missing); color: #0e150a; }
+.chip.mst-active:not(.on) { border-color: var(--pin-active); color: var(--pin-active); }
+.chip.mst-sprung:not(.on) { border-color: var(--pin-sprung); color: var(--pin-sprung); }
+.chip.mst-pulled:not(.on) { border-color: var(--pin-pulled); color: var(--pin-pulled); }
+.chip.mst-missing:not(.on) { border-color: var(--pin-missing); color: var(--pin-missing); }
+/* Q145: pin scheme picker rows (Settings → Appearance). */
+.scheme-row { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:0 0 8px; color:var(--ink); font-size:16px; font-weight:600; cursor:pointer; }
+.scheme-row[aria-pressed="true"] { border-color: var(--accent); }
+.scheme-dots { display:flex; gap:6px; margin-left:auto; }
+.scheme-dots i { width:22px; height:22px; border-radius:50%; border:2px solid #fff; }
+.scheme-check { color: var(--accent); font-weight:700; }
+/* Q146 (2026-10-02): Tanner reversed Q94 — the map status chips now wear the
+   white pin border in both on and off states; fills and text keep their
+   pin-scheme colors. */
+.map-status-filters .chip.on,
+.map-status-filters .chip:not(.on) { border-color: #fff; }
+/* Q11: saved-entry suggestions under the bait/lure/urine inputs */
+.suggest { display: none; margin-top: -2px; }
+.suggest.show { display: block; }
+.suggest-item { display: block; width: 100%; text-align: left; font-size: 15px; color: var(--text);
+  background: var(--card); border: 1px solid var(--line); border-top: none; padding: 9px 12px; cursor: pointer; }
+.suggest-item:first-child { border-top: 1px solid var(--line); border-radius: 10px 10px 0 0; }
+.suggest-item:last-child { border-radius: 0 0 10px 10px; }
+.suggest-item:active { background: var(--line); }
+/* Q26: stacked attractant rows — one input + remove per row, suggestions
+   under each row, "add another" below the stack */
+.attr-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.attr-row .attr-row-input { flex: 1; min-width: 0; }
+.attr-row-x { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
+  background: var(--panel); color: var(--muted); border: 1px solid var(--line);
+  font-size: 20px; line-height: 1; padding: 0; }
+.attr-row-x:active { background: var(--line); }
+/* Q236 (2026-11-07): the one-tap clear × inside manual-entry inputs. The
+   wrap keeps the input full-width; the × sits over the input's right edge
+   and only shows while the field has text. */
+.clear-wrap { position: relative; display: block; }
+.attr-row .clear-wrap { flex: 1; min-width: 0; }
+.clear-wrap input[type=text] { padding-right: 42px; }
+.input-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent;
+  color: var(--muted); font-size: 20px; line-height: 1; padding: 0; cursor: pointer; }
+.input-clear:active { background: var(--line); }
+.input-clear[hidden] { display: none; }
+.attr-add { margin-top: 8px; }
+/* Q98: the add-another button hides until a row has a value; base button
+   display:inline-flex overrides the UA [hidden] rule, so this is explicit. */
+.attr-add[hidden] { display: none; }
+/* Q48: quiet coordinates line at the bottom of the set form/detail sheets —
+   small, dim, centered, tap to copy. Not a title, keep it quiet. */
+
+/* Q72 (2026-10-01): odometer photo button sits below the full-width input;
+   live miles readout. */
+.odo-photo-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; flex-wrap: wrap; }
+/* Tanner 2026-10-07: the just-attached thumbnail drops BELOW the button, like
+   the license/documents grid — never squeezed half off the right edge. */
+.odo-photo-row .dim { flex: 1 1 100%; min-height: 0; }
+.odo-photo-row .dim:empty { display: none; }
+.odo-photo-btn { flex: 0 0 auto; padding: 6px 12px; font-size: 13px; }
+.odo-miles { text-align: center; font-weight: 700; font-size: 16px; margin: 8px 0 2px; min-height: 20px; }
+/* Tanner 2026-10-01: route mode — tab bar locked while a route estimate is
+   drawn; the "‹ Back to mileage" chip is the only way out. */
+body.route-locked #tabbar { pointer-events: none; opacity: .35; }
+/* Q79 (2026-10-01): suggestion rows with per-entry delete for user-typed items. */
+.suggest-row { display: flex; align-items: center; }
+.suggest-row .suggest-item { flex: 1; text-align: left; }
+.suggest-del { background: none; border: none; color: var(--dim); font-size: 18px; line-height: 1; padding: 8px 10px; cursor: pointer; }
+.suggest-del:active { color: #f0a49c; }
+/* Q78 (2026-10-01): example hint above each attractant field. */
+.attr-hint { margin: 2px 0 6px; font-size: 13px; }
+/* Q88 (2026-10-01): guide table of contents — section list, tap to jump. */
+.guide-toc { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; background: rgba(255,255,255,.02); }
+.guide-toc-title { font-weight: 700; margin: 0 0 6px; font-size: 14px; }
+.guide-toc-item { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--accent); padding: 6px 0; font-size: 14px; cursor: pointer; }
+.guide-toc-item:active { opacity: .6; }
+/* Q205 (2026-10-19): the Sign & Forage Reference chapter's search bar sticks
+   to the top of the guide sheet while the chapter scrolls under it — the
+   same no-jump sticky treatment as the pane searches (Q198/Q202). */
+.guide-ref-search { position: sticky; top: 0; z-index: 6; background: var(--sheet); padding: 8px 0 10px; }
+/* Q143 (2026-10-01): Tanner — fill the weather chip green like the other
+   left-side map controls. NOTE: Leaflet adds the leaflet-control class ONTO
+   the element returned by onAdd, so the old descendant selector
+   (.leaflet-control #weather-chip) never matched and the chip stayed
+   transparent. Bare #weather-chip matches the element itself. */
+#weather-chip {
+  position: static; left: auto; bottom: auto; top: auto; right: auto;
+  background: var(--green) !important; border: 1px solid rgba(0,0,0,.25); color: #0e150a;
+  font-size: 13px; font-weight: 700; min-height: 0; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; line-height: 1.3;
+  padding: 5px 10px;
+}
+/* Q130 (2026-10-01): Tanner — the left control stack (weather, zoom, layers)
+   sits at the bottom-left of the map, where it used to be, with all three
+   controls centered on one shared vertical axis. */
+.leaflet-bottom.leaflet-left {
+  top: auto !important; bottom: 30px !important;
+  transform: none;
+}
+/* Q93's concern stands: the expanded layers panel must not re-center the
+   column, so it overlays to the right of its toggle instead of stretching
+   the layout. */
+.leaflet-bottom.leaflet-left { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.leaflet-control-layers { position: relative; }
+.leaflet-control-layers-expanded {
+  position: absolute; left: calc(100% + 8px); bottom: 0;
+  white-space: nowrap; z-index: 600;
+}
+/* B21: no white fringe on the rounded corners — the controls are green all
+   the way through, and the layer panel goes dark when expanded. */
+.leaflet-bar { border-radius: 14px; overflow: hidden; background: var(--green); border: none;
+  box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+.leaflet-bar a:first-child { border-radius: 13px 13px 0 0; }
+.leaflet-bar a:last-child { border-radius: 0 0 13px 13px; }
+.leaflet-control-layers { background: transparent; border: none; box-shadow: none; border-radius: 14px; }
+.leaflet-control-layers-toggle { border-radius: 14px; background-color: var(--green); background-clip: padding-box; }
+.leaflet-control-layers-expanded { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+/* Q148 (2026-10-06): tap-to-cycle base-layer button — a text label replaces
+   the stock layers-panel toggle glyph. Plain click handler, no hover-
+   dependent behavior, iOS-Safari-safe. */
+/* Q155 (2026-10-06): Tanner — icon per view replaces the truncated text
+   label. Fixed 44px square, emoji glyph centered, no text styling. */
+.leaflet-control-layers-toggle.layer-cycle {
+  background-image: none; width: 44px; height: 44px;
+  line-height: 44px; padding: 0; font-size: 22px;
+  color: #0e150a; text-decoration: none; text-align: center; display: block;
+}
+/* Q149 (2026-10-06): Tanner — thin black outline on the three left-side
+   green map buttons (weather chip, zoom +/-, layers), matching the
+   right-side fab border treatment. Outline, not border, so sizing is
+   untouched. */
+#weather-chip, .leaflet-bar, .leaflet-control-layers-toggle { outline: 2px solid #0d0d0d; }
+
+/* set-detail status control (changed manually at check time) */
+.status-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; }
+.status-row .field { margin: 0; flex: 0 0 auto; }
+.status-row select { flex: 1; min-width: 0; }
+
+/* ---------- list panes ---------- */
+.scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 14px 14px 30px; }
+.pane-head { padding: 16px 14px 6px; }
+/* Q111 (2026-10-01): Tanner — app-wide type hierarchy. 1) Screen heading:
+   large, bold, centered. */
+.pane-head h2 { margin: 0 0 2px; font-size: 26px; font-weight: 800; text-align: center; }
+.pane-head p { margin: 0; color: var(--muted); font-size: 14px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+/* Q111: 2) Section subheading — left aligned, divider above, visibly larger
+   than field labels (14px). A touch bigger so it can't be mistaken for the
+   subheading below it. */
+.card h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; text-align: left; border-top: 1px solid var(--line); padding-top: 10px; }
+/* First h3 in a card needs no divider — it's already at the top. */
+.card h3:first-child { border-top: none; padding-top: 0; }
+/* Q49: collapsible Settings sections — full-width header buttons with a
+   chevron; the body shows/hides via the hidden attribute (reliable on iOS). */
+.setsec { padding: 0 14px; }
+.setsec-head { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; color: var(--ink); font-size: 18px; font-weight: 700; padding: 14px 0; margin: 0; min-height: 0; cursor: pointer; text-align: left; }
+.setsec-chev { color: var(--muted); font-size: 22px; line-height: 1; transition: transform .18s ease; }
+.setsec.open .setsec-chev { transform: rotate(90deg); }
+.setsec-body { padding-bottom: 14px; }
+.setsec-body[hidden] { display: none; }
+/* Tanner 2026-10-07: per-line blocks inside the Paperwork Mileage section —
+   line header with total + Log trip, trip rows below like everywhere else. */
+.pm-line { border-top: 1px solid var(--line); padding: 10px 0 4px; margin-top: 10px; }
+.pm-line:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+.pm-line-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+/* Q135 (2026-10-01): Tanner — the Trap & Snare Rules control matches the two
+   gold buttons above it: gold, caps, centered. It stays the only collapsible
+   one (Q119); the chevron pins right so the label stays truly centered, and
+   the opened body drops as a dark card below the gold button. Scoped to
+   #seasons-rules so sheet collapsibles are untouched. */
+#seasons-rules .card.setsec { background: none; border: none; padding: 0; margin: 12px 0; }
+#seasons-rules .setsec-head {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: var(--tap); padding: 12px 40px; margin: 12px 0;
+  background: var(--accent); color: var(--accent-ink); border: none; border-radius: var(--radius);
+  font-size: 17px; font-weight: 700; text-transform: uppercase; text-align: center; cursor: pointer;
+}
+#seasons-rules .setsec-chev {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--accent-ink); font-size: 22px; line-height: 1; transition: transform .18s ease;
+}
+#seasons-rules .setsec.open .setsec-chev { transform: translateY(-50%) rotate(90deg); }
+#seasons-rules .setsec-body {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  margin-top: 8px; padding: 14px;
+}
+/* Q99 (2026-10-01): the notes/memos/photos collapsible on the set form, log
+   form, and set detail — a divider sets it off from the fields above. */
+.sheet .setsec { border-top: 1px solid var(--line); margin-top: 10px; }
+/* Q-report: subsection divider inside a merged settings card (Backup & Reports). */
+.setsec-sub { font-size: 12.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin: 16px 0 4px; }
+.setsec-sub:first-of-type { margin-top: 4px; }
+/* Iowa Trap & Snare Rules proof (2026-09-30) */
+.rules-sec { font-weight: 700; margin: 12px 0 4px; font-size: 15px; }
+.rules-list { margin: 0 0 8px 20px; padding: 0; }
+.rules-list li { margin: 5px 0; line-height: 1.35; }
+.rules-src { font-size: 12px; }
+.rules-src a { color: var(--accent); }
+.rowline { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.rowline:last-child { border-bottom: none; }
+/* Q15: collapsible per-set setup details on the Totals tab. The row shows
+   the set name and count; tapping expands the labeled setup beneath it. */
+.totals-setrow { cursor: pointer; }
+.rowline[data-totkey] { cursor: pointer; }
+.tchev { color: var(--muted); font-size: 14px; }
+.totals-detail { padding: 2px 0 10px 20px; font-size: 14px; }
+.totals-detail[hidden] { display: none; }
+.totals-detail > div { padding: 1px 0; }
+.dim { color: var(--muted); font-size: 14px; }
+/* Q7: short captions naming each import/export button's file source */
+.imp-cap { color: var(--muted); font-size: 12.5px; margin: -4px 2px 6px; line-height: 1.35; }
+/* Q8: directional arrowheads on the route-estimate polyline. The ➤ glyph
+   points east; JS rotates each one to the segment bearing. */
+.route-arrow { font-size: 18px; line-height: 22px; text-align: center; color: #e8b64c; text-shadow: 0 1px 3px rgba(0,0,0,.75); }
+.big-num { font-size: 26px; font-weight: 800; color: var(--accent); }
+
+.badge { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.badge.inseason { background: #1d3a1d; color: #9ed69a; border: 1px solid #3f6b3a; }
+.badge.outseason { background: #3d2c10; color: #f5cf7a; border: 1px solid #6b4d1c; }
+.badge.closed { background: #3a1f1b; color: #f0a49c; border: 1px solid #6e2f28; }
+.badge.yearround { background: #16283d; color: #9cc0ee; border: 1px solid #2f4d6e; }
+.badge.status-active { background: #1d3a1d; color: #9ed69a; }
+/* Q140 (2026-10-01): Tanner — stacked-pin menu rows. Full-width tappable
+   rows: set name left, status badge + trap type right. */
+.stack-row { display: flex; align-items: center; gap: 10px; width: 100%;
+  text-align: left; background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px; margin: 0 0 10px; font-size: 16px; cursor: pointer; }
+.stack-row:active { background: #2a2f26; }
+.stack-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.badge.status-sprung { background: #3d2c10; color: #f5cf7a; }
+.badge.status-pulled { background: #2a2a2a; color: #bdbdbd; }
+.badge.status-missing { background: #1d2b4d; color: #a9c6ee; }
+.badge.status-prospect { background: #2e2145; color: #cdbcf0; }
+.badge.released { background: #2a2a2a; color: #bdbdbd; border: 1px solid #4a4a4a; }
+.badge.alive { background: #1d3a1d; color: #9ed69a; border: 1px solid #3f6b3a; }
+.badge.transported { background: #16283d; color: #9cc0ee; border: 1px solid #2f4d6e; }
+.badge.kept { background: #3d2c10; color: #f5cf7a; border: 1px solid #6b4d1c; }
+.badge.discarded { background: #2a2a2a; color: #8a8a8a; border: 1px solid #3a3a3a; }
+.badge.none { background: transparent; color: #8a8a8a; border: 1px dashed #4a4a4a; }
+.badge.other-ev { background: #2e1d3d; color: #cfa9ee; border: 1px solid #5a3a6e; }
+.req { color: var(--red); }
+.seg { display: flex; gap: 8px; margin: 2px 0 14px; }
+.seg button { flex: 1; padding: 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 16px; font-weight: 600; }
+.seg button.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+/* Set-form status buttons wear their pin colors when selected */
+/* B31: per-status colors removed from the form — the standard brass segmented
+   treatment is the only selected state. Color coding lives on the map. */
+.seg button[hidden], #log-disposition[hidden], #log-disposition-label[hidden] { display: none; }
+/* Q189 fix (Tanner, 2026-10-18): five status buttons no longer squeeze into one
+   row — Prospect was pushed off the right edge of the set form. Status seg
+   wraps to two rows: three across, then two. Scoped to .status-seg only. */
+.status-seg { flex-wrap: wrap; }
+.status-seg button { flex: 1 1 30%; }
+#log-disposition button { white-space: nowrap; font-size: 14px; padding: 12px 4px; }
+
+.warnbox { background: #3d2c10; border: 1px solid #6b4d1c; color: #f5cf7a; border-radius: var(--radius); padding: 12px 14px; margin: 12px 0; font-size: 15px; }
+.warnbox.red { background: #3a1f1b; border-color: #6e2f28; color: #f0a49c; }
+/* Q172 (2026-10-08): green notice variant — the Scorecard "Unspecified" bucket
+   wears this so it reads as a notice, never as a feature card. */
+.warnbox.green { background: #1c2b18; border-color: #435c38; color: var(--ink); }
+.warnbox.green .wb-title { color: var(--muted); }
+.form-error { display: none; color: #f0a49c; font-weight: 700; font-size: 15px; margin: 10px 0 2px; }
+.form-error.show { display: block; }
+.warnbox .wb-title { font-weight: 800; margin-bottom: 4px; }
+/* Q97 (2026-10-01): the bait-rule head is a standalone collapsible row, not
+   inside a .setsec — slim, amber, chevron rotates on expand.
+   Q160 (2026-10-06): Tanner — the rule box showed empty on his phone. Root
+   cause: .setsec-head's `display:flex` beats the UA `[hidden]{display:none}`,
+   so the header never hid; its stale tap handler then revealed the emptied
+   box. Explicit guard, matching the .attr-add pattern. */
+.baitrule-head[hidden] { display: none; }
+.baitrule-head { font-size: 16px; padding: 10px 0; color: #f5cf7a; }
+.baitrule-head.open .setsec-chev { transform: rotate(90deg); }
+.reminder-tag { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 8px; }
+
+.species-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; color: var(--ink); min-height: var(--tap); }
+.species-row .sp-name { flex: 1; }
+.species-row .sp-name .sci { display: block; font-size: 13px; color: var(--faint); font-style: italic; font-weight: 400; }
+.species-row.selected { border-color: var(--accent); background: #2c2413; }
+/* Species silhouettes are black-on-transparent; invert to light-on-dark theme. */
+.sp-icon { width: 40px; height: 40px; object-fit: contain; flex: none; filter: invert(1); }
+.sp-icon-lg { width: 56px; height: 56px; object-fit: contain; flex: none; filter: invert(1); }
+.sp-icon.sp-help { display: inline-flex; align-items: center; justify-content: center; filter: none; border: 2px solid currentColor; border-radius: 50%; font-weight: 700; font-size: 22px; line-height: 1; cursor: pointer; }
+
+.stepper { display: flex; align-items: center; gap: 14px; margin: 8px 0; }
+.stepper button { width: 60px; height: 60px; border-radius: 50%; font-size: 28px; padding: 0; min-height: 0; background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+.stepper .count { font-size: 40px; font-weight: 800; min-width: 70px; text-align: center; }
+
+/* ---------- bottom sheets ---------- */
+#scrim { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 900; display: none; }
+#scrim.show { display: block; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 950;
+  background: var(--sheet);
+  border-top: 2px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  /* Q198: svh, not dvh — dvh resizes as iOS viewport state changes (keyboard
+     opening/closing), which made sheets resize mid-typing and the screen
+     jump. svh is the stable small-viewport height: the sheet holds still. */
+  max-height: 92%; max-height: 92svh;
+  display: none; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.sheet.show { display: flex; }
+.sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: var(--faint); margin: 10px auto 2px; flex: 0 0 auto; }
+.sheet-head { display: flex; align-items: center; justify-content: center; position: relative; padding: 8px 16px; flex: 0 0 auto; }
+.sheet-head h2 { margin: 0; font-size: 21px; }
+.sheet-x { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+.sheet-x { background: none; border: none; color: var(--muted); font-size: 26px; min-height: 48px; width: 48px; padding: 0; }
+.sheet-body { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 4px 16px 24px; min-height: 0; }
+/* Q198: pinned search bar for picker sheets — sits between the sheet head and
+   the scrolling body, so the field is always on screen while the list scrolls. */
+.sheet-search { flex: 0 0 auto; padding: 6px 16px 10px; }
+/* Q198/eg: the kind picker holds ONE fixed height. Tanner's screen recording
+   (2026-10-18) showed the sheet hugging its contents: as typed letters
+   narrowed the results, the sheet shrank and the head + search field rode
+   down the screen; deleting letters grew it back. Fixed height = the field
+   never travels, however many kinds match. */
+#sheet-marker-kinds { height: 92%; height: 92svh; }
+/* Q198/eg (app-wide, Tanner's order): the same no-jump rule for the pane
+   searches — History and Seasons fields stick to the top of their pane, so
+   they never scroll away and typing never moves them. (The Log a Catch
+   species list carries a fixed height in its markup for the same reason;
+   the landowner field tops a full-height pane card and never exhibited it.) */
+#history-search, #seasons-search { position: sticky; top: 0; z-index: 6; }
+/* Q161 (2026-10-06): Tanner — a giant warnbox (e.g. the coyote county-rules
+   alert in Log a Catch) made the sheet content taller than the sheet, and
+   without min-height:0 the flex item refused to shrink, so the sheet never
+   scrolled and the Save button was unreachable below the fold. One-line
+   global fix: every sheet now scrolls no matter how tall its warnings get. */
+.sheet-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row > * { flex: 1; min-width: 0; }
+/* Tanner 2026-10-01: date boxes were overlapping — flex children must shrink,
+   and iOS date inputs need min-width:0 too or their picker UI overflows. */
+.btn-row input { min-width: 0; }
+/* Q142 rewrite (2026-10-01): three builds of flex-shrink/min-width tweaks
+   never tamed iOS's date inputs on Tanner's phone. These rows no longer
+   rely on shrink math at all: explicit 50/50 columns, inputs pinned to
+   their column width. */
+/* update banner: a new build took charge while this page runs the old one */
+#update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  background: #2a2416;
+  border-bottom: 2px solid #d9a441;
+  color: #f0e6c8;
+  font-size: 15px;
+}
+#update-reload {
+  background: #d9a441;
+  color: #1a1508;
+  border: none;
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 6px 18px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Reports + Danger Zone date rows: stacked full-width.
+ * Four builds tried to keep native date inputs side-by-side and iOS kept
+ * overlapping them. Stacked fields cannot overlap on any browser, ever. */
+.date-row { display: block; }
+.date-row > .date-col { width: 100%; margin: 0 0 10px 0; }
+.date-row > .date-col:last-child { margin-bottom: 0; }
+.date-col > input[type=date] { display: block; width: 100%; max-width: 100%;
+  min-width: 0; box-sizing: border-box; }
+.date-col > input[type=date]::-webkit-datetime-edit,
+.date-col > input[type=date]::-webkit-datetime-edit-fields-wrapper { min-width: 0; }
+/* iOS Safari lays out date inputs as content-box even with box-sizing set, so
+   the input overshoots its container by its own horizontal padding+border
+   (28px + 2px = 30px, from the base field rule) and bleeds past the card —
+   measured on Tanner's iPhone 2026-10-01. iOS-only: pull the width back so
+   the border box lands exactly on the Line select's width. */
+@supports (-webkit-touch-callout: none) {
+  .date-col > input[type=date] { width: calc(100% - 30px); }
+}
+/* Tanner 2026-10-01: compact button row — smaller, less clunky. */
+.btn-compact > .btn-secondary { padding: 8px 10px; font-size: 14px; min-height: 0; }
+/* Home-ground prompt (Q53): three equal buttons, no icon, all centered. */
+.home-choices > * { flex: 1 1 0; min-width: 0; text-align: center; }
+
+/* ---------- modal ---------- */
+#modal { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,.6); }
+#modal.show { display: flex; }
+#modal .modal-card { background: var(--sheet); border: 1px solid var(--line); border-radius: 16px; padding: 22px; width: 100%; max-width: 420px; max-height: 84%; max-height: 84dvh; overflow-y: auto; overflow-x: hidden; }
+#modal h3 { margin-top: 0; }
+/* Second modal layer: sits above #modal for the landowner photo viewer. */
+#modal2 { position: fixed; inset: 0; z-index: 1100; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(0,0,0,.75); }
+#modal2.show { display: flex; }
+#modal2 .modal-card { background: var(--sheet); border: 1px solid var(--line); border-radius: 16px; padding: 22px; width: 100%; max-width: 420px; max-height: 84%; max-height: 84dvh; overflow-y: auto; overflow-x: hidden; }
+#modal2 h3 { margin-top: 0; }
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed; left: 16px; right: 16px; bottom: calc(var(--tabbar-h) + 18px + env(safe-area-inset-bottom));
+  z-index: 1100; background: #0e120a; color: var(--ink);
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  padding: 14px 16px; text-align: center; font-weight: 600;
+  display: none;
+}
+#toast.show { display: block; }
+
+/* ---------- licenses ---------- */
+.lic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+/* Tanner 2026-10-07: trip photos render in the same lic-grid below the row.
+   Hide the grid entirely when the trip has no photos attached. */
+.trip-photogrid { margin-top: 0; }
+.trip-photogrid:empty { display: none; }
+/* Tanner 2026-10-07 (dc): each trip's photos live inside the same box as
+   the trip's data — one card per trip so trips don't flow together. */
+.trip-block { border: 1px solid var(--line); border-radius: 12px; padding: 8px; margin-bottom: 10px; background: var(--panel); cursor: pointer; }
+.trip-block .line-row { border: none; padding: 0; margin-bottom: 0; }
+.trip-block .trip-photogrid:not(:empty) { margin-top: 8px; }
+.trip-block + .trip-block { margin-top: 10px; }
+.lic-item { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 4/3; }
+.lic-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lic-item button { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; min-height: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; font-size: 18px; padding: 0; }
+.lic-link { position: absolute; left: 6px; bottom: 6px; background: rgba(0,0,0,.65); color: #fff; border-radius: 20px; padding: 4px 10px; font-size: 12px; pointer-events: none; }
+
+/* ---------- memos / audio ---------- */
+.memo-card { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.memo-row { display: flex; align-items: center; gap: 10px; }
+.memo-row audio { flex: 1; min-width: 0; height: 40px; }
+.memo-row .dim { white-space: nowrap; }
+.memo-transcript { margin: 6px 0 0; font-size: 14px; line-height: 1.45; }
+.memo-catch-tag { margin-bottom: 4px; }
+.rec-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--red); margin-right: 8px; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+/* voice memo attached to a catch: quiet flag on the catch row, player opens inline */
+.log-memo { margin-top: 6px; }
+.memo-play { background: none; border: 1px solid var(--line); border-radius: 20px; padding: 4px 12px; font-size: 13px; color: var(--ink); }
+.memo-play .bi, .memo-catch-tag .bi { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
+.memo-play:disabled { opacity: .5; }
+.log-memo-player { margin-top: 6px; }
+.log-memo-player audio { width: 100%; height: 40px; margin-top: 6px; }
+.log-memo-player audio:first-child { margin-top: 0; }
+
+.voice-preview { background: #10140c; border: 1px dashed var(--line); border-radius: var(--radius); padding: 12px; margin-top: 10px; font-size: 15px; display: none; }
+.voice-preview.show { display: block; }
+
+/* ---------- misc ---------- */
+.empty { text-align: center; color: var(--faint); padding: 40px 20px; }
+#map .empty { padding-right: 96px; } /* Q227: keep the library-fail message clear of the right-side fabs */
+.empty .big { font-size: 44px; margin-bottom: 10px; }
+.hidden-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* ---------- map-screen silhouette icons (build r) ---------- */
+#tabbar button .ti-img { width: 28px; height: 28px; object-fit: contain; filter: invert(1); opacity: 1; }
+#tabbar button.active .ti-img { opacity: 1; }
+#tabbar button .ti-svg { filter: none; color: #fff; }
+
+/* B15: pin placement is modal. While a pin is being placed the tab bar and
+   the line bar are locked — the map stays live, and the placement bar's own
+   buttons are the only way out. */
+body.placing #tabbar,
+body.placing #line-bar { pointer-events: none; }
+body.placing #tabbar,
+body.placing #line-bar { opacity: .45; }
+/* B15-fix: while a placement is armed, the status filters, weather chip, and
+   the other map FABs go dead too — the drop-pin button stays live so the
+   armed placement can still be cancelled. */
+body.placing #map-status-filters,
+body.placing #weather-chip,
+body.placing #btn-locate,
+body.placing #btn-add-gps,
+body.placing .leaflet-control-layers { pointer-events: none; opacity: .45; }
+/* B15: zoom stays live during placement — pan and zoom, nothing else. */
+
+/* ---- trap lines ---- */
+.line-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.line-row.active { border-color: var(--accent); }
+.line-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; background: none; border: none; color: var(--text); text-align: left; padding: 10px 12px; cursor: pointer; }
+.line-name { font-size: 16px; font-weight: 800; }
+.line-row .badge { margin-top: 2px; }
+.line-edit { align-self: center; flex: none; }
+.fab img { width: 30px; height: 30px; object-fit: contain; display: block; }
+/* B23: the crosshair glyph nearly fills its button. Icons ship natively
+   colored now (no more invert) — see B24. */
+#btn-locate img { width: 44px; height: 44px; }
+/* Q218 (2026-10-27): the drop-pin button carries Lydia's track pin — the same
+   artwork the drag-and-drop marker uses (Tanner's order). The pin's content
+   occupies the middle of its square canvas, so the img runs larger than the
+   standard fab glyph; and because the artwork is a black pin, it sits on a
+   sepia-tan disc (brand color) so it reads on the dark button the way it
+   reads on the map. Artwork itself exactly as delivered. */
+#btn-drop-pin img { width: 54px; height: 54px; }
+/* Q219 (2026-10-27): the pin carries a thin white outline (Tanner's order) so
+   the black pin stands out on dark buttons and dark ground. The outline is
+   baked into assets/pin-track-ol.png — a rendered copy of Lydia's SVG with a
+   mathematically even white dilation around the silhouette. Her delivered
+   file is untouched; a CSS shadow stack proved uneven and was rejected. */
+/* 2026-09-29: generalized from #place-bar-only — the home-bar cancel × rendered
+   at the raw 128px with no size rule. */
+.pb-ic { width: 18px; height: 18px; object-fit: contain; filter: invert(1); vertical-align: -3px; margin-right: 6px; }
+/* Branded inline icons (build bo): .bi ships native-colored, .bi.inv inverts for light surfaces. */
+.bi { width: 20px; height: 20px; object-fit: contain; vertical-align: -4px; margin-right: 8px; }
+.bi.inv { filter: invert(1); }
+.empty .big img { width: 46px; height: 46px; object-fit: contain; }
+#weather-chip .wx-ic { width: 26px; height: 26px; object-fit: contain; display: block; }
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 15px; margin: 10px 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+/* Q108 (2026-10-01): Tanner — the set-detail rows (Lure, Urine, Visual, Audio,
+   Other Attractants, Date set, Weather) ran together with no separators. Each
+   row now gets its own divider so it reads as a separate row. Border goes on
+   both dt and dd so the line spans the full width of the grid. */
+#sd-fields > dt:not(:first-child),
+#sd-fields > dd:not(:nth-child(2)) { border-top: 1px solid var(--line); padding-top: 9px; }
+.season-group-head { font-size: 15px; font-weight: 800; color: var(--accent); margin: 18px 0 8px; text-align: center; }
+.log-row { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.log-row .lr-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.log-row .lr-species { font-weight: 700; font-size: 17px; }
+.log-row .lr-count { font-weight: 800; color: var(--accent); font-size: 18px; }
+/* Q38: per-catch delete — small, quiet until needed */
+.log-del { flex: 0 0 auto; width: 32px; height: 32px; border: none; background: none;
+  color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; border-radius: 8px; }
+.log-del:active { background: var(--panel); color: #c00; }
+
+/* ---- history filters ---- */
+.hist-summary { font-size: 15px; margin: 4px 0 10px; }
+#history-search { margin-bottom: 8px; }
+.seg.compact { margin: 2px 0 10px; }
+.seg.compact button { padding: 8px; font-size: 14px; }
+/* Q36: five reason buttons wrap 3+2 on narrow phones */
+#sf-missing-reason { flex-wrap: wrap; }
+#sf-missing-reason button { flex: 1 1 28%; font-size: 13px; padding: 10px 2px; }
+/* Q36: reason picker inside the set-detail modal */
+.mr-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.mr-list button { padding: 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 16px; font-weight: 600; text-align: left; }
+.mr-list button.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip-row { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; -webkit-overflow-scrolling: touch; }
+.chip-row::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--text); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.day-head { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+  background: none; border: none; color: var(--accent); font-size: 15px; font-weight: 800;
+  padding: 12px 0 4px; cursor: pointer; }
+.day-head .chev { margin-left: auto; color: var(--muted); }
+.lr-notes { font-size: 14px; color: var(--muted); margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-row.expanded .lr-notes { white-space: normal; }
+.sp-group { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+.sp-head { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: var(--panel); border: none; border-radius: 0; color: var(--text);
+  padding: 12px; min-height: 0; cursor: pointer; }
+.sp-name { font-weight: 700; font-size: 16px; }
+.sp-total { font-weight: 800; color: var(--accent); font-size: 17px; margin-left: auto; }
+.sp-head .chev { color: var(--muted); }
+.sp-sub { padding: 0 12px 10px; }
+.sp-body { border-top: 1px solid var(--line); padding: 0 12px; }
+.sp-body .log-row:last-child { border-bottom: none; }
+.about-logo { width: 72px; height: 72px; border-radius: 16px; object-fit: contain; padding: 6px; box-sizing: border-box; background: radial-gradient(ellipse at 50% 40%, #2B341B 0%, #141810 78%); }
+.checkline { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; }
+.checkline input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); }
+/* Q39 modifications section */
+.mods-sect { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.mods-title { font-weight: 600; margin-bottom: 2px; }
+.mods-hint { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.mods-sub { font-size: 12px; color: var(--muted); margin: 8px 0 2px; text-align: center; }
+.modline { display: flex; align-items: center; gap: 10px; padding: 7px 0; cursor: pointer; }
+.mod-addrow { display: flex; gap: 8px; margin-top: 8px; }
+.mod-addrow input { flex: 1; min-width: 0; }
+/* Q101 (2026-10-01): Tanner — checkbox stacks go two-across to save space.
+   Used by the mods section and the settings toggle groups. */
+.checkgrid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.checkgrid .checkline { padding: 7px 0; font-size: 15px; }
+/* Q103: coordinate footer, small and dim, tap to copy — only rendered when
+   the Privacy toggle is on. */
+.coords-bottom { font-size: 11px; color: var(--muted); text-align: center; margin: 12px 0 4px; }
+.coords-bottom:active { opacity: .6; }
+
+/* ---- weather tab ---- */
+.wx-temp { font-size: 32px; font-weight: 800; }
+.wx-cond { margin-top: 4px; font-size: 16px; font-weight: 600; }
+.wx-meta { margin-top: 8px; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.wx-hour { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.wx-hour:last-child { border-bottom: none; }
+.wx-day { padding: 9px 0; border-bottom: 1px solid var(--line); }
+.wx-day:last-child { border-bottom: none; }
+.wx-day-top { display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
+.wx-day .dim { font-size: 13px; margin-top: 2px; line-height: 1.4; }
+.wx-alert { padding: 10px 12px; border-left: 4px solid #c0392b; background: rgba(192,57,43,.08); border-radius: 8px; margin-bottom: 8px; font-size: 14px; line-height: 1.4; }
+.wx-alert:last-child { margin-bottom: 0; }
+.wx-alert details { margin-top: 6px; }
+.wx-alert summary { cursor: pointer; color: var(--muted); }
+
+/* ---- centered page furniture (all tabs) ---- */
+.pane-head { text-align: center; }
+.hist-summary { text-align: center; }
+.chip-row { justify-content: safe center; }
+/* Q111: card h3 stays left-aligned (see above) — not centered. */
+.season-group-head { text-align: center; }
+.warnbox { text-align: center; }
+#pane-licenses .scroll > p.dim { text-align: center; }
+#sheet-weather .sheet-body > h3, #sheet-weather .sheet-body > p.dim { text-align: center; }
+#sheet-weather #weather-now { text-align: center; }
+
+/* build ag: scorecard, trap-check, photos */
+.photo-strip { display: flex; gap: 8px; overflow-x: auto; padding: 6px 2px; }
+.photo-strip:empty { display: none; }
+.photo-thumb { width: 76px; height: 76px; object-fit: cover; border-radius: 10px; flex: 0 0 auto; border: 1px solid var(--line); }
+.photo-thumb.sm { width: 48px; height: 48px; border-radius: 8px; }
+.log-photos { display: flex; gap: 6px; margin-top: 6px; }
+#pane-map { position: relative; }
+.sc-row { display: flex; align-items: baseline; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+/* Q172 (2026-10-08): clear separation between the Scorecard filter controls
+   (season/category toggles + species search) and the results below them. */
+.sc-results { margin-top: 22px; }
+.sc-results-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sc-results-head::before, .sc-results-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.sc-results-head span { font-size: 12px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+.sc-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sc-rate { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Sponsor chip on Scorecard rows: the maker's logo, tappable for their bio.
+   The chip never affects rank — it only marks products whose maker sponsors. */
+.sc-chip { flex: 0 0 auto; align-self: center; width: 30px; height: 30px; padding: 0;
+  border: none; border-radius: 8px; background: #fff; cursor: pointer; }
+.sc-chip img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; display: block; }
+/* Scorecard honesty rule: ranks are earned, never bought. */
+.scorecard-honesty { margin-top: 14px; padding: 14px 12px; text-align: center;
+  border: 2px solid var(--accent); border-radius: 14px; color: var(--accent); font-size: 15px; }
+.scorecard-honesty strong { color: var(--accent); }
+
+/* Q170: Sponsored Products directory on the Scorecard tab */
+#sc-sp-q { width: 100%; margin-top: 10px; }
+.sp-card { display: flex; align-items: center; gap: 10px; padding: 10px; margin-top: 8px;
+  border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+.sp-card:active { opacity: .75; }
+.sp-logo { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; }
+.sp-info { flex: 1 1 auto; min-width: 0; }
+.sp-product { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-brand { font-size: 12px; }
+
+/* Q171: sponsor bio full-screen sheet (the demo design) */
+#modal.sponsor-sheet { padding: 0; background: rgba(0,0,0,.92); }
+#modal.sponsor-sheet .modal-card { width: 100%; max-width: none; height: 100%; max-height: none;
+  border: none; border-radius: 0; background: transparent; padding: 0; }
+.sp-bio-sheet { position: relative; min-height: 100%; padding: 110px 30px 44px; text-align: center; }
+.sp-bio-x { position: absolute; top: 56px; right: 16px; background: none; border: none;
+  color: var(--muted); font-size: 36px; line-height: 1; padding: 10px; cursor: pointer; }
+.sp-bio-logo { width: 124px; height: 124px; border-radius: 50%; object-fit: cover; }
+.sp-bio-name { text-transform: uppercase; letter-spacing: .1em; font-size: 30px; margin: 20px 0 8px; }
+.sp-bio-tagline { color: var(--accent); text-transform: uppercase; letter-spacing: .2em;
+  font-weight: 700; font-size: 15px; }
+.sp-bio-div { border: none; border-top: 1px solid var(--line); margin: 24px 44px; }
+.sp-bio-h { color: var(--accent); text-transform: uppercase; letter-spacing: .24em;
+  font-size: 15px; margin: 28px 0 16px; }
+.sp-bio-p { line-height: 1.65; font-size: 16px; margin: 0 0 14px; }
+.sp-bio-prod { margin: 0 0 20px; }
+.sp-bio-prodname { font-weight: 700; font-size: 17px; }
+.sp-bio-proddesc { font-size: 14px; margin-top: 6px; line-height: 1.55; }
+.sp-bio-upgrade { font-size: 14px; margin: 24px 0 0; line-height: 1.5; }
+.sp-bio-visit { display: inline-block; margin-top: 28px; background: var(--accent);
+  color: var(--accent-ink); font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+  font-size: 16px; padding: 17px 52px; border-radius: 999px; text-decoration: none; }
+.sp-bio-sponsored { margin-top: 56px; color: var(--accent); text-transform: uppercase;
+  letter-spacing: .32em; font-size: 13px; }
+
+/* ---- equal-size History disposition filter chips, scrollable row ---- */
+#hist-disp-chips { overflow-x: auto; justify-content: flex-start; }
+#hist-disp-chips .chip { flex: 0 0 auto; width: 172px; text-align: center; padding: 10px 8px; font-size: 13px; white-space: nowrap; }
+
+/* ---- History report filters (build aq) ---- */
+#exp-filters-clear { width: 100%; margin: 4px 0; }
+#exp-dim-filters .dim-label { font-size: 13px; font-weight: 700; color: var(--muted); margin: 12px 0 2px; text-align: center; }
+#exp-dim-filters .btn-row > div { min-width: 0; }
+/* Q174 (2026-10-08): multi-select dropdown buttons — look like the app's other
+   dropdowns at rest; tap to open the checklist sheet. */
+.ms-select { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-height: var(--tap); background: #10140c; color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  font-family: inherit; font-size: 17px; padding: 12px 14px; cursor: pointer; text-align: left; }
+.ms-select .ms-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-select .ms-chev { color: var(--muted); font-size: 20px; line-height: 1; flex: 0 0 auto; }
+.ms-row { display: flex; align-items: center; gap: 12px; width: 100%;
+  background: none; border: none; border-bottom: 1px solid var(--line);
+  color: var(--ink); font-size: 17px; padding: 14px 4px; cursor: pointer; text-align: left; }
+.ms-check { flex: 0 0 28px; height: 28px; border: 1px solid var(--line); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent-ink); font-size: 18px; font-weight: 700; }
+.ms-row.on .ms-check { background: var(--accent); border-color: var(--accent); }
+.ms-row.on { font-weight: 600; }
+
+/* ---- demo mode phone framing (build am, ?demo=1 only) ---- */
+body.demo-shot { background: #05070a; }
+body.demo-shot #view-splash,
+body.demo-shot #view-onboard,
+body.demo-shot #view-main { max-width: 430px; margin-left: auto; margin-right: auto; }
+body.demo-shot #view-main { box-shadow: 0 0 80px rgba(0,0,0,.65); min-height: 100dvh; }
+
+/* Trapper's guide + legal notices (Settings → Help & legal) */
+.guide-body h3 { margin: 20px 0 8px; font-size: 17px; }
+.guide-body h3:first-child { margin-top: 4px; }
+.guide-body p { margin: 8px 0; line-height: 1.55; }
+.guide-body ol, .guide-body ul { margin: 8px 0; padding-left: 22px; line-height: 1.55; }
+.guide-body li { margin: 5px 0; }
+
+/* ---------- sponsors (Q67: inside the suggestion menus + Q32 tap-for-bio) ---------- */
+/* Q67: sponsored products sit at the top of the bait/lure suggestion menus.
+   The product name fills the row on tap; the eye opens the sponsor bio. */
+.suggest-sponsor { display: flex; align-items: stretch; background: var(--card);
+  border: 1px solid var(--line); border-top: none; }
+.suggest-sponsor:first-child { border-top: 1px solid var(--line); border-radius: 10px 10px 0 0; overflow: hidden; }
+.suggest-fill { flex: 1 1 auto; min-width: 0; text-align: left; font-size: 15px; color: var(--text);
+  background: none; border: none; padding: 9px 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+.suggest-fill:active { background: var(--line); }
+/* Q69: the product name shrinks to a single line (ellipsis if it's still
+   too long); the Sponsored pill shrinks a touch. */
+.suggest-name { font-size: 13.5px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; min-width: 0; flex: 1 1 auto; }
+.sponsor-eye { flex: 0 0 46px; background: none; border: none; border-left: 1px solid var(--line);
+  font-size: 19px; color: var(--muted); cursor: pointer; min-height: 0;
+  display: flex; align-items: center; justify-content: center; padding: 5px; }
+.sponsor-eye:active { background: var(--line); color: var(--ink); }
+/* Q69: the sponsor logo replaces the eye — object-fit: contain keeps the
+   whole logo inside the visible icon area, never cropped. */
+.sponsor-logo { width: 100%; height: 100%; max-width: 36px; max-height: 36px;
+  object-fit: contain; pointer-events: none; }
+.pill {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--accent); color: var(--accent-ink); border-radius: 20px; padding: 2px 8px;
+  white-space: nowrap; flex: 0 0 auto; }
+.sponsor-bio { text-align: center; }
+.sponsor-bio-badge { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; }
+.sponsor-bio h3 { margin: 10px 0 6px; }
+.sponsor-bio p { margin: 0 0 12px; line-height: 1.55; color: var(--ink); }
+.sponsor-bio a.btn-small { text-decoration: none; display: inline-block; }
+
+/* Q8: back-button to the mileage dialog while a route estimate is drawn — a
+   floating gold button, bottom-center, only present while the route is up. */
+#route-back-chip {
+  position: absolute; bottom: 88px; left: 50%; transform: translateX(-50%);
+  z-index: 500; width: auto; white-space: nowrap;
+  padding: 10px 18px; border-radius: 999px;
+  outline: 2px solid #0d0d0d; /* Q165 (2026-10-07): Tanner — same black outline
+    as the weather chip / zoom / layers controls, so every floating map
+    control reads as one family over satellite imagery. */
+  box-shadow: 0 2px 10px rgba(0,0,0,.5);
+}
+/* BQ1 (2026-09-30): the hidden attribute must always win — a stuck
+   "Back to mileage" chip is never acceptable. */
+#route-back-chip[hidden] { display: none !important; }
+body.placing #route-back-chip { display: none; }
+
+/* Mileage dialog buttons read in all caps, like the tab labels. */
+.mbtns button { text-transform: uppercase; letter-spacing: .6px; }
+
+/* History disposition filters: stacked grid, no horizontal slide (Tanner 2026-09-30). */
+#hist-disp-chips { flex-wrap: wrap; overflow-x: visible; gap: 8px; padding-bottom: 10px; }
+#hist-disp-chips .chip { flex: 1 1 28%; text-align: center; padding: 10px 6px; font-size: 14px; }
+
+/* Totals section cards: tappable collapsing headers (Tanner 2026-09-30). */
+.totals-card-head { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: none; padding: 0; margin: 0 0 2px; cursor: pointer; color: inherit; font: inherit; text-align: left; }
+.totals-card-head h3 { margin: 0; }
+.totals-card-head .tchev { color: var(--accent); font-size: 15px; }
+
+/* Landowner phone rows: number plus one-tap Call / Text (Tanner 2026-09-30). */
+.lo-phone { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; }
+.lo-phone-num { font-weight: 700; font-size: 16px; }
+.lo-phone-btns { display: flex; gap: 6px; flex: 0 0 auto; }
+.lo-phone-btns a { text-decoration: none; }
+/* Tanner 2026-10-01: Call/Text buttons — centered text, rounded to match the app. */
+.lo-phone-btns .btn-small { justify-content: center; border-radius: var(--radius); }
+/* Q136 (2026-10-01): Tanner — the icon + label are centered INSIDE the
+   Call/Text buttons, and the buttons run narrower/shorter so the phone
+   number fits on one line. Root cause of the miss: these are <a> elements
+   without the `btn` class, so they never matched `button, .btn` and had no
+   flex container — the old justify-content rule did nothing. */
+.lo-phone-btns .btn-small {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; font-size: 14px; padding: 6px 10px;
+}
+.lo-phone-btns .btn-small .bi { margin-right: 0; }
+.lo-phone-num { white-space: nowrap; }
+/* Tanner 2026-10-01: border around the landowner notes so it reads as a box. */
+.lo-notes-box { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+
+/* One-tap remove for a single landowner phone number (Tanner 2026-09-30). */
+
+/* ===== Q190/Q191 (2026-10-18): sign & forage markers ===== */
+#mk-hint { background: var(--accent); color: var(--accent-ink); display: none; flex: 0 0 auto; z-index: 500; padding: 9px 14px; font-size: 14.5px; font-weight: 600; text-align: center; }
+#mk-hint.show { display: block; }
+#mk-place-bar, #mk-area-bar { flex: 0 0 auto; z-index: 500; display: none; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; font-size: 15px; font-weight: 600; background: #1d2a12; color: #fff; border-bottom: 1px solid var(--line); }
+#mk-place-bar.show, #mk-area-bar.show { display: flex; }
+.fab-diamond { width: 24px; height: 24px; }
+.mk-pin { width: 30px; height: 30px; background: #2c3e2d; border: 2px solid #f0d28a; border-radius: 8px; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
+.mk-pin.mk-place { width: 36px; height: 36px; border-color: #fff; }
+.mk-glyph { width: 21px; height: 21px; fill: none; stroke: #f5efdd; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transform: rotate(-45deg); }
+.mk-pin .mk-glyph { transform: rotate(-45deg); }
+.mk-kind-ic { flex: 0 0 auto; width: 34px; height: 34px; background: #2c3e2d; border: 2px solid #f0d28a; border-radius: 8px; transform: rotate(45deg); display: inline-flex; align-items: center; justify-content: center; margin: 4px; }
+.mk-kind-ic .mk-glyph { width: 22px; height: 22px; }
+.mk-kind-ic.big { width: 46px; height: 46px; }
+.mk-kind-ic.big .mk-glyph { width: 30px; height: 30px; }
+.mk-kind-choice { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; font-size: 16px; background: var(--card, #fff); border: 1.5px solid var(--line); border-radius: 10px; color: inherit; margin-bottom: 12px; }
+.mk-kind-choice #mk-kind-name { display: inline-flex; align-items: center; gap: 8px; }
+.mk-kind-choice .mk-kind-ic { width: 28px; height: 28px; margin: 0; }
+.mk-kind-choice .mk-kind-ic .mk-glyph { width: 18px; height: 18px; }
+.mk-fam-head { font-size: 12.5px; font-weight: 800; letter-spacing: 1.1px; color: #8a6d3b; margin: 16px 0 4px; text-transform: uppercase; }
+.mk-kind-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 7px 4px; background: none; border: none; border-bottom: 1px solid var(--line); font-size: 16.5px; color: inherit; text-align: left; cursor: pointer; }
+.mk-kind-nm { flex: 1; }
+.mk-disclaimer { background: #fdf3d7; border: 1px solid #e3cf8f; border-radius: 10px; padding: 9px 12px; font-size: 13.5px; color: #5a4712; margin: 8px 0; }
+.mk-detail-head { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; }
+.mk-detail-head h3 { margin: 0; }
+.mk-note-card p, .mk-info-card p { margin: 4px 0; }
+.mk-safety { color: #8a4b12; }
+.mk-form-photos, .mk-detail-photos { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.mk-thumb { width: 74px; height: 74px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.mk-ref-fam { margin: 18px 0 6px; color: #2c3e2d; }
+.mk-ref-row { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.mk-ref-row p { margin: 3px 0; }
+.mk-src { font-size: 13px; padding-left: 18px; }
+.mk-src li { margin: 5px 0; }
+
+/* ===== Q190 Show button + sheet (2026-10-18) ===== */
+/* Q232 (2026-11-06): the bulk control lives IN the Show pill — one pill
+   carrying the count and the Select all button. The wrapper holds the pill
+   chrome; the Show button inside is bare text (it opens the filter sheet),
+   and the gold button appears only when the filter is narrowed to one
+   status. The old bottom bulk bar (.bulk-bar, Q229) is gone, and with it
+   the bulk-on fab lift. */
+.show-pill { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 600; display: flex; align-items: center; gap: 10px; max-width: 92vw; background: rgba(18,22,14,.88); border: 3px solid #fff; border-radius: 999px; padding: 4px 8px 4px 16px; }
+.show-btn { flex: 1 1 auto; min-width: 0; min-height: 0; background: none; border: none; padding: 0; font-size: 16px; font-weight: 700; color: #f5efdd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Q232 fix (2026-11-06): the label rides in a block span so a too-long label
+   ellipsizes from the START — a bare <button> centers its text and clips
+   both ends with no ellipsis, in Safari and in Chromium alike (Tanner's
+   06:51 screenshot). The span shrink-to-fits and centers itself, so short
+   labels stay centered in the pill. */
+.show-label { display: block; width: fit-content; max-width: 100%; margin: 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.show-pill .bulk-btn { flex: 0 0 auto; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 24px; padding: 4px 14px; min-height: 0; font-size: 16px; font-weight: 800; white-space: nowrap; }
+#btn-bulk[hidden] { display: none; }
+/* Q232: Edit-all sheet rows — label above a full-width select. */
+.bulk-edit-row { display: block; margin: 12px 0; font-size: 16px; font-weight: 700; color: var(--ink); }
+.bulk-edit-row select { display: block; width: 100%; margin-top: 6px; padding: 10px; font-size: 16px; border-radius: 10px; border: 1px solid var(--line); background: #10150c; color: #fff; }
+.bulk-status-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 10px; background: none; border: none; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 17px; font-weight: 700; text-align: left; min-height: var(--tap); }
+.bulk-dot { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; vertical-align: -2px; }
+.show-row { display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid var(--line); font-size: 17px; cursor: pointer; }
+.show-row input[type="checkbox"] { margin-left: auto; width: 22px; height: 22px; accent-color: #7fa650; }
+.show-dot { flex: 0 0 auto; width: 15px; height: 15px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); }
+.show-name { flex: 1; }
+.show-count { opacity: .6; font-size: 13.5px; }
+.show-fam { padding-left: 30px; font-size: 15.5px; }
+.show-sign-head { cursor: default; }
+.show-expand { background: none; border: none; color: inherit; font-size: 18px; padding: 4px 8px; cursor: pointer; }
+
+/* ===== Q192 live route tracking (2026-10-18) ===== */
+#track-bar { flex: 0 0 auto; z-index: 500; display: none; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; font-size: 15px; font-weight: 600; background: #2a1214; color: #fff; border-bottom: 1px solid var(--line); }
+#track-bar.show { display: flex; }
+/* Q200: the saved-route bar — same family as the place/track bars. */
+#route-bar { flex: 0 0 auto; z-index: 500; display: none; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; font-size: 15px; font-weight: 600; background: #1d2a12; color: #fff; border-bottom: 1px solid var(--line); }
+#route-bar.show { display: flex; }
+#track-dot { width: 11px; height: 11px; border-radius: 50%; background: #e5484d; flex: 0 0 auto; }
+#track-stats { font-variant-numeric: tabular-nums; }
+
+/* ===== Q186/Q187 (2026-10-18): city jump + locating state ===== */
+.home-city-row { width: 100%; position: relative; display: flex; justify-content: center; }
+.city-jump { width: min(320px, 86vw); padding: 7px 11px; font-size: 15px; border-radius: 9px; border: 1px solid var(--line); background: #10150c; color: #fff; }
+.city-matches { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); width: min(320px, 86vw); background: #10150c; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; z-index: 700; box-shadow: 0 8px 22px rgba(0,0,0,.5); }
+.city-match { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 15.5px; background: none; border: none; border-bottom: 1px solid rgba(255,255,255,.08); color: #fff; cursor: pointer; }
+.city-match:last-child { border-bottom: none; }
+#locate-hint { background: var(--accent); color: var(--accent-ink); display: none; flex: 0 0 auto; z-index: 500; padding: 9px 14px; font-size: 14.5px; font-weight: 600; text-align: center; }
+#locate-hint.show { display: block; }
+@keyframes locatePulse { 0% { box-shadow: 0 0 0 0 rgba(47,143,240,.55); } 70% { box-shadow: 0 0 0 13px rgba(47,143,240,0); } 100% { box-shadow: 0 0 0 0 rgba(47,143,240,0); } }
+.fab.searching-mode { animation: locatePulse 1.1s ease-out infinite; border-color: #2f8ff0 !important; }
+
+/* ============ JON COOK CLONE — fur sales + no routes ============ */
+/* Routes are gone from this copy: the route bar, the back-to-mileage chip
+   and the track fab never show, even if a stale state ever said otherwise. */
+#route-bar, #route-back-chip, #btn-track { display: none !important; }
+/* One fur-sale species row: species picker, count stepper, price per pelt. */
+.sale-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+.sale-item .sale-item-head { display: flex; gap: 8px; align-items: center; }
+.sale-item .sale-item-head select { flex: 1; min-width: 0; }
+.sale-item .sale-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.sale-item .sale-grid label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 2px; }
+.sale-item .sale-grid input { width: 100%; }
+.sale-item .sale-line-total { font-size: 13px; color: var(--muted); margin-top: 6px; text-align: right; }
+/* A fur sale in the History list. */
+.sale-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.sale-row .sale-row-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.sale-row .sale-row-total { font-weight: 700; }
+.sale-row .sale-row-lines { font-size: 14px; margin-top: 4px; }
+.sale-row .sale-row-meta { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
