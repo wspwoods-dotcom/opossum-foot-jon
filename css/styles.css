@@ -1203,10 +1203,10 @@ body.placing #route-back-chip { display: none; }
 /* One fur-sale species row: species picker, count stepper, price per pelt. */
 .sale-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
 .sale-item .sale-item-head { display: flex; gap: 8px; align-items: center; }
-.sale-item .sale-item-head select { flex: 1; min-width: 0; }
+.sale-item .sale-item-head .clear-wrap { flex: 1; min-width: 0; }
 .sale-item .sale-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .sale-item .sale-grid label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 2px; }
-.sale-item .sale-grid input { width: 100%; }
+.sale-item .sale-grid input, .sale-item .sale-grid select { width: 100%; }
 .sale-item .sale-line-total { font-size: 13px; color: var(--muted); margin-top: 6px; text-align: right; }
 /* A fur sale in the History list. */
 .sale-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
